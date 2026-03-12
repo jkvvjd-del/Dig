@@ -5,62 +5,102 @@ local UIS=game:GetService("UserInputService")
 if not LocalPlayer then return end
 
 local SG=Instance.new("ScreenGui")
-local F=Instance.new("Frame")
-local B=Instance.new("TextButton")
+local MainMenu=Instance.new("Frame")
+local ToggleDig=Instance.new("TextButton")
+local ToggleSell=Instance.new("TextButton")
+local CloseBtn=Instance.new("TextButton")
 
-SG.Name="AutoDig"
+SG.Name="MobileMenu"
 SG.Parent=LocalPlayer.PlayerGui
+SG.ResetOnSpawn=false
 
-F.Parent=SG
-F.Size=UDim2.new(0,200,0,100)
-F.Position=UDim2.new(0.5,-100,0.5,-50)
-F.BackgroundColor3=Color3.fromRGB(50,50,50)
+MainMenu.Parent=SG
+MainMenu.Size=UDim2.new(0,250,0,300)
+MainMenu.Position=UDim2.new(0.5,-125,0.5,-150)
+MainMenu.BackgroundColor3=Color3.fromRGB(30,30,30)
+MainMenu.BorderSizePixel=0
+MainMenu.Visible=false
 
-B.Parent=F
-B.Size=UDim2.new(1,-20,0.5,-10)
-B.Position=UDim2.new(0.5,-90,0.5,20)
-B.BackgroundColor3=Color3.fromRGB(0,128,255)
-B.Text="Auto Dig: OFF"
+ToggleDig.Parent=MainMenu
+ToggleDig.Size=UDim2.new(1,0,0.33,0)
+ToggleDig.Position=UDim2.new(0,0,0,0)
+ToggleDig.BackgroundColor3=Color3.fromRGB(0,128,255)
+ToggleDig.Text="Auto Dig: OFF"
+ToggleDig.TextSize=20
+
+ToggleSell.Parent=MainMenu
+ToggleSell.Size=UDim2.new(1,0,0.33,0)
+ToggleSell.Position=UDim2.new(0,0,0.33,0)
+ToggleSell.BackgroundColor3=Color3.fromRGB(255,128,0)
+ToggleSell.Text="Auto Sell: OFF"
+ToggleSell.TextSize=20
+
+CloseBtn.Parent=MainMenu
+CloseBtn.Size=UDim2.new(1,0,0.33,0)
+CloseBtn.Position=UDim2.new(0,0,0.66,0)
+CloseBtn.BackgroundColor3=Color3.fromRGB(255,0,0)
+CloseBtn.Text="Close Menu"
+CloseBtn.TextSize=20
 
 local AD=false
+local AS=false
 local DD=0.5
-local ST=true
-local RD=true
-local MRD=0.2
-local MDT=3600
-local DC=5
-local t=os.time()
-local cc=0
-local M=LocalPlayer:GetMouse()
 
-local function cC()
-    local c=LocalPlayer.Character
-    return c and c:FindFirstChild("Humanoid") and c.Humanoid.MoveDirection~=Vector3.new(0,0,0) or false
-end
-
-local function gRD()
-    return RD and math.random()*MRD or 0
-end
-
-local function sAD()
+local function autoDig()
     while AD do
-        wait(DD+gRD())
-        if os.time()-t>MDT then break end
-        if cc>=DC then break end
-        if ST and cC() then break end
-        if ST and LocalPlayer.Character then
-            local t=LocalPlayer.Character:FindFirstChildOfClass("Tool")
-            if t then pcall(function() t.ClickOn.Click:FireServer() end) cc=cc+1 end
-        else M.Button1Down:Connect(function() M.ClickOn() end) end
+        wait(DD)
+        if LocalPlayer.Character then
+            local tool=LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            if tool then 
+                pcall(function() 
+                    tool.ClickOn:FireServer()
+                    tool.Activate:FireServer()
+                end) 
+            end
+        end
     end
 end
 
-B.MouseButton1Click:connect(function()
-    AD=not AD
-    B.Text="Auto Dig: "..(AD and "ON" or "OFF")
-    if AD then t=os.time() cc=0 spawn(sAD) end
+local function autoSell()
+    while AS do
+        wait(1)
+        if LocalPlayer.PlayerGui:FindFirstChild("Shop") then
+            local shop=LocalPlayer.PlayerGui.Shop
+            if shop then
+                pcall(function()
+                    shop.SellAll:FireServer()
+                end)
+            end
+        end
+    end
+end
+
+UIS.InputBegan:Connect(function(input)
+    if input.KeyCode==Enum.KeyCode.E then
+        MainMenu.Visible=not MainMenu.Visible
+    end
 end)
 
-UIS.InputBegan:connect(function(i)
-    if i.KeyCode==Enum.KeyCode.Escape then AD=false B.Text="Auto Dig: OFF" end
+CloseBtn.MouseButton1Click:Connect(function()
+    MainMenu.Visible=false
+    AD=false
+    AS=false
+    ToggleDig.Text="Auto Dig: OFF"
+    ToggleSell.Text="Auto Sell: OFF"
+end)
+
+ToggleDig.MouseButton1Click:Connect(function()
+    AD=not AD
+    ToggleDig.Text="Auto Dig: "..(AD and "ON" or "OFF")
+    if AD then 
+        spawn(autoDig) 
+    end
+end)
+
+ToggleSell.MouseButton1Click:Connect(function()
+    AS=not AS
+    ToggleSell.Text="Auto Sell: "..(AS and "ON" or "OFF")
+    if AS then 
+        spawn(autoSell) 
+    end
 end)
