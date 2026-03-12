@@ -1,116 +1,90 @@
-local Players=game:GetService("Players")
-local LocalPlayer=Players.LocalPlayer
-local UIS=game:GetService("UserInputService")
+-- Script settings
+local clickDelay = 0.01 -- Delay between clicks (in seconds)
+local running = false   -- Script running flag
+local menuOpen = false  -- Menu visibility flag
+local selling = false   -- Selling flag
 
-if not LocalPlayer then return end
+-- Create GUI elements
+local gui = Instance.new("ScreenGui")
+local mainMenu = Instance.new("Frame")
+local toggleButton = Instance.new("TextButton")
+local sellButton = Instance.new("TextButton")  -- Новая кнопка для автоселла
+local closeButton = Instance.new("TextButton")
+local openMenuButton = Instance.new("TextButton")
 
--- Создаем GUI
-local SG=Instance.new("ScreenGui")
-local MainMenu=Instance.new("Frame")
-local ToggleDig=Instance.new("TextButton")
-local ToggleSell=Instance.new("TextButton")
-local CloseBtn=Instance.new("TextButton")
+-- Initialize GUI
+gui.Name = "AutoClickMenu"
+gui.Parent = game:GetService("CoreGui")
 
-SG.Name="MobileMenu"
-SG.Parent=LocalPlayer.PlayerGui
-SG.ResetOnSpawn=false
+mainMenu.Parent = gui
+mainMenu.Size = UDim2.new(0, 250, 0, 300)
+mainMenu.Position = UDim2.new(0.5, -125, 0.5, -150)
+mainMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainMenu.BorderSizePixel = 0
+mainMenu.Visible = false
 
-MainMenu.Parent=SG
-MainMenu.Size=UDim2.new(0,250,0,300)
-MainMenu.Position=UDim2.new(0.5,-125,0.5,-150)
-MainMenu.BackgroundColor3=Color3.fromRGB(30,30,30)
-MainMenu.BorderSizePixel=0
-MainMenu.Visible=false
+-- Кнопка открытия меню
+openMenuButton.Parent = gui
+openMenuButton.Size = UDim2.new(0, 100, 0, 50)
+openMenuButton.Position = UDim2.new(0.5, -50, 0.9, 0)
+openMenuButton.BackgroundColor3 = Color3.fromRGB(0, 128, 255)
+openMenuButton.Text = "Open Menu"
+openMenuButton.TextSize = 20
+openMenuButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Кнопка копания
-ToggleDig.Parent=MainMenu
-ToggleDig.Size=UDim2.new(1,0,0.33,0)
-ToggleDig.Position=UDim2.new(0,0,0,0)
-ToggleDig.BackgroundColor3=Color3.fromRGB(0,128,255)
-ToggleDig.Text="Auto Dig: OFF"
-ToggleDig.TextSize=20
+-- Кнопка автоклика
+toggleButton.Parent = mainMenu
+toggleButton.Size = UDim2.new(1, 0, 0.3, 0)
+toggleButton.Position = UDim2.new(0, 0, 0, 0)
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+toggleButton.Text = "Auto Click: OFF"
+toggleButton.TextSize = 20
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Кнопка продажи
-ToggleSell.Parent=MainMenu
-ToggleSell.Size=UDim2.new(1,0,0.33,0)
-ToggleSell.Position=UDim2.new(0,0,0.33,0)
-ToggleSell.BackgroundColor3=Color3.fromRGB(255,128,0)
-ToggleSell.Text="Auto Sell: OFF"
-ToggleSell.TextSize=20
+-- Новая кнопка автоселла
+sellButton.Parent = mainMenu
+sellButton.Size = UDim2.new(1, 0, 0.3, 0)
+sellButton.Position = UDim2.new(0, 0, 0.3, 0)
+sellButton.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+sellButton.Text = "Auto Sell: OFF"
+sellButton.TextSize = 20
+sellButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- Кнопка закрытия
-CloseBtn.Parent=MainMenu
-CloseBtn.Size=UDim2.new(1,0,0.33,0)
-CloseBtn.Position=UDim2.new(0,0,0.66,0)
-CloseBtn.BackgroundColor3=Color3.fromRGB(255,0,0)
-CloseBtn.Text="Close Menu"
-CloseBtn.TextSize=20
+closeButton.Parent = mainMenu
+closeButton.Size = UDim2.new(1, 0, 0.1, 0)
+closeButton.Position = UDim2.new(0, 0, 0.8, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.Text = "Close Menu"
+closeButton.TextSize = 20
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local AD=false
-local AS=false
-local DD=0.5
-
--- Авто-копание
-local function autoDig()
-    while AD do
-        wait(DD)
-        if LocalPlayer.Character then
-            local tool=LocalPlayer.Character:FindFirstChildOfClass("Tool")
-            if tool then 
-                pcall(function() 
-                    tool.ClickOn:FireServer()
-                    tool.Activate:FireServer()
-                end) 
+-- Функция автоклика
+local function toggleClick()
+    running = not running
+    if running then
+        print("Auto click enabled")
+        spawn(function()
+            while running do
+                wait(clickDelay)
+                game:GetService("VirtualUser"):Click()
             end
-        end
+        end)
+    else
+        print("Auto click disabled")
     end
+    toggleButton.Text = "Auto Click: " .. (running and "ON" or "OFF")
 end
 
--- Авто-продажа
-local function autoSell()
-    while AS do
-        wait(1)
-        if LocalPlayer.PlayerGui:FindFirstChild("Shop") then
-            local shop=LocalPlayer.PlayerGui.Shop
-            if shop then
+-- Функция автоселла
+local function toggleSell()
+    selling = not selling
+    if selling then
+        print("Auto sell enabled")
+        spawn(function()
+            while selling do
+                wait(1)
                 pcall(function()
-                    shop.SellAll:FireServer()
-                end)
-            end
-        end
-    end
-end
-
--- Открытие меню по нажатию
-UIS.InputBegan:Connect(function(input)
-    if input.KeyCode==Enum.KeyCode.E then
-        MainMenu.Visible=not MainMenu.Visible
-    end
-end)
-
--- Закрытие меню
-CloseBtn.MouseButton1Click:Connect(function()
-    MainMenu.Visible=false
-    AD=false
-    AS=false
-    ToggleDig.Text="Auto Dig: OFF"
-    ToggleSell.Text="Auto Sell: OFF"
-end)
-
--- Включение авто-копания
-ToggleDig.MouseButton1Click:Connect(function()
-    AD=not AD
-    ToggleDig.Text="Auto Dig: "..(AD and "ON" or "OFF")
-    if AD then 
-        spawn(autoDig) 
-    end
-end)
-
--- Включение авто-продажи
-ToggleSell.MouseButton1Click:Connect(function()
-    AS=not AS
-    ToggleSell.Text="Auto Sell: "..(AS and "ON" or "OFF")
-    if AS then 
-        spawn(autoSell) 
-    end
-end)
+                    game:GetService("ReplicatedStorage")
+                        :WaitForChild("Packages")
+                        :Wait
